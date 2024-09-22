@@ -1,4 +1,7 @@
+import os
 from typing import Any
+
+from dotenv import load_dotenv
 
 from utils.constants import Environment
 
@@ -28,3 +31,7 @@ if settings.ENVIRONMENT.is_deployed:
 
 if not settings.ENVIRONMENT.is_debug:
     app_configs["openapi_url"] = None  # hide docs
+
+load_dotenv()  # Take environment variables from .env
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")

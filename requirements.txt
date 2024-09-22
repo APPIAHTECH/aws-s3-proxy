@@ -4,3 +4,4 @@ uvicorn
 httpx
 moto==5.0.14  # For AWS mocking
 python-dotenv
+python-multipart==0.0.10

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 
-from app.services.storage import S3Storage
+from app.services.storage.s3_storage import S3StorageService
 
 
 class TestStorageService(unittest.TestCase):
@@ -10,9 +10,10 @@ class TestStorageService(unittest.TestCase):
     """
 
     def setUp(self):
-        self.storage: S3Storage = S3Storage(bucket_name='test_bucket')
+        self.storage: S3StorageService = S3StorageService(bucket_name='test_bucket')
         self.bucket_name: str = "test_bucket"
         self.file_name: str = "test_file.txt"
+
     @patch('boto3.client')
     def test_save_file_to_s3_bucket(self, mock_boto_client):
         """
@@ -41,7 +42,7 @@ class TestStorageService(unittest.TestCase):
         :return:
         """
         # Create a mock S3 client
-        mock_s3 : MagicMock = MagicMock()
+        mock_s3: MagicMock = MagicMock()
         mock_boto_client.return_value = mock_s3
 
         # Mock the presigned URL generation
