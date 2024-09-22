@@ -1,0 +1,8 @@
+fastapi
+boto3
+uvicorn
+pytest
+pytest-asyncio
+httpx
+moto  # For AWS mocking
+python-dotenv
