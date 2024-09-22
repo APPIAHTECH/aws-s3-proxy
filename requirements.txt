@@ -1,8 +1,6 @@
 fastapi
 boto3
 uvicorn
-pytest
-pytest-asyncio
 httpx
-moto  # For AWS mocking
+moto==5.0.14  # For AWS mocking
 python-dotenv

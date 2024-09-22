@@ -126,22 +126,18 @@ curl -X 'POST'   'http://127.0.0.1:8000/api/v1/download/'   -H 'accept: applicat
 
 ## Running Unit Tests
 
-Tests use **pytest** and mock AWS interactions. Ensure that tests are run in an isolated environment without interacting with real AWS resources.
+Tests use **unittest** and mock AWS interactions. Ensure that tests are run in an isolated environment without interacting with real AWS resources.
 
 1. **Install Testing Dependencies**:
 
-Make sure you have installed `pytest` for testing:
-
-```bash
-pip install pytest
-```
+Make sure you have installed `unittest` for testing:
 
 2. **Run Tests**:
 
 Run tests using the following command:
 
 ```bash
-pytest tests/
+python -m unittest discover
 ```
 
 Tests are located in the `tests/` folder. These will mock S3 services to avoid actual AWS calls during testing.
