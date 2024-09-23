@@ -2,9 +2,11 @@ import logging
 from typing import Any
 
 import boto3
+from botocore.exceptions import ClientError
 
-from app.services.storage import StorageService
+from app.services.storage.abc_storage import StorageService
 from settings.config import AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_REGION
+from utils.exceptions import S3BucketError
 
 # Configure the logger
 logging.basicConfig(level=logging.INFO)
@@ -34,24 +36,18 @@ class S3StorageService(StorageService):
     async def save(self, file: Any, filename: str = None) -> None:
         """
         Save the data into the S3 bucket.
-        :param file:
+        :param spooled_temp_file:
         :param filename:
         :return:
         """
-        # @TODO implement
-        """if not self.check_bucket_exists():
-            raise ValueError("Bucket does not exist")"""
-        # @TODO implement
-        """if not FileValidator.is_valid_file_format(file=file):
-            raise ValueError("File format is not valid")"""
-        # @TODO implement
-        """unique_filename = FileValidator.generate_unique_filename(file.filename)"""
-
-        self.client.upload_fileobj(
-            file,
-            self.bucket_name,
-            filename
-        )
+        try:
+            self.client.upload_fileobj(
+                file,
+                self.bucket_name,
+                filename
+            )
+        except ClientError as e:
+            raise S3BucketError(e.response['Error']['Message'])
 
     async def retrieve(self, filename: str) -> str:
         """

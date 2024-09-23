@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from fastapi import UploadFile
@@ -13,11 +14,12 @@ class FileManager:
     """
 
     @staticmethod
-    def is_valid_file_format(file: UploadFile) -> bool:
-        if not file.filename.split('.')[-1].lower() in Config.ALLOWED_EXTENSIONS:
+    def is_valid_file_format(spooled_temp_file: UploadFile) -> bool:
+        if not spooled_temp_file.filename.split('.')[-1].lower() in Config.ALLOWED_EXTENSIONS:
             return False
         return True
 
     @staticmethod
     def generate_unique_filename(original_filename: str) -> str:
-        return f"{uuid.uuid4()}_{original_filename}"
+        _, extension = os.path.splitext(original_filename)
+        return f"{uuid.uuid4()}{extension}"

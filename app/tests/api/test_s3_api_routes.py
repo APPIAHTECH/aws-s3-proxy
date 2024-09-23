@@ -24,7 +24,7 @@ class TestS3Routes(unittest.TestCase):
         Test uploading a file to S3
         :return:
         """
-        mock_save = AsyncMock(return_value={"is_file_uploaded": True})
+        mock_save = AsyncMock(return_value={"filename": "fabc3e15-d736-4f25-ab57-77bc138daa2b"})
         mock_s3_service.return_value.save = mock_save
 
         file_content = io.BytesIO(b"Some data")
@@ -32,7 +32,7 @@ class TestS3Routes(unittest.TestCase):
 
         data = {
             "bucket_name": self.bucket_name,
-            "file_name": self.file_name,
+            "object_name": self.file_name,
         }
         files = {
             "file": ("test_file.txt", io.BytesIO(b"Some data"), "text/plain")
@@ -51,7 +51,7 @@ class TestS3Routes(unittest.TestCase):
 
         params: dict = {
             "bucket_name": self.bucket_name,
-            "file_name": self.file_name,
+            "object_name": self.file_name,
         }
         response: Response = client.get(url=self.API_PATH, params=params)
         self.assertEqual(response.status_code, 200)

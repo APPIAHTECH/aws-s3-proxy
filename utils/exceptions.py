@@ -1,33 +1,33 @@
-from typing import Any
-
-from fastapi import HTTPException, status
-
-
-class DetailedHTTPException(HTTPException):
-    STATUS_CODE = status.HTTP_500_INTERNAL_SERVER_ERROR
-    DETAIL = "Server error"
-
-    def __init__(self, **kwargs: dict[str, Any]) -> None:
-        super().__init__(status_code=self.STATUS_CODE, detail=self.DETAIL, **kwargs)
+from fastapi import Request
+from starlette.responses import JSONResponse
 
 
-class PermissionDenied(DetailedHTTPException):
-    STATUS_CODE = status.HTTP_403_FORBIDDEN
-    DETAIL = "Permission denied"
+class S3BucketError(Exception):
+    def __init__(self, message: str):
+        self.message = message
 
 
-class NotFound(DetailedHTTPException):
-    STATUS_CODE = status.HTTP_404_NOT_FOUND
+class FileFormatError(Exception):
+    def __init__(self, message: str):
+        self.message = message
 
 
-class BadRequest(DetailedHTTPException):
-    STATUS_CODE = status.HTTP_400_BAD_REQUEST
-    DETAIL = "Bad Request"
+async def general_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred."},
+    )
 
 
-class NotAuthenticated(DetailedHTTPException):
-    STATUS_CODE = status.HTTP_401_UNAUTHORIZED
-    DETAIL = "User not authenticated"
+async def s3_bucket_error_handler(request: Request, exc: S3BucketError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.message},
+    )
 
-    def __init__(self) -> None:
-        super().__init__(headers={"WWW-Authenticate": "Bearer"})
+
+async def file_format_error_handler(request: Request, exc: FileFormatError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.message},
+    )
