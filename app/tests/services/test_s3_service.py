@@ -1,62 +1,61 @@
+import io
 import unittest
-from unittest.mock import patch, MagicMock
+
+import boto3
+from moto import mock_aws
 
 from app.services.storage.s3_storage import S3StorageService
 
 
-class TestStorageService(unittest.TestCase):
+class TestStorageService(unittest.IsolatedAsyncioTestCase):
     """
     Test StorageService
     """
 
     def setUp(self):
-        self.storage: S3StorageService = S3StorageService(bucket_name='test_bucket')
         self.bucket_name: str = "test_bucket"
         self.file_name: str = "test_file.txt"
+        self.region: str = "eu-west-1"
 
-    @patch('boto3.client')
-    def test_save_file_to_s3_bucket(self, mock_boto_client):
+    async def test_save_file_to_s3_bucket(self):
         """
         Test uploading file to S3 bucket
-        :param mock_boto_client:
-        :return:
         """
-        # Create a mock S3 client
-        mock_s3: MagicMock = MagicMock()
-        mock_boto_client.return_value = mock_s3
-        file: MagicMock = MagicMock()
+        with mock_aws():
+            conn = boto3.resource("s3", region_name=self.region)
 
-        is_file_saved = self.storage.save(file=file, filename=self.file_name)
+            conn.create_bucket(Bucket=self.bucket_name, CreateBucketConfiguration={
+                'LocationConstraint': self.region
+            })
 
-        # Assert that the upload_fileobj was called with the correct parameters
-        mock_s3.upload_fileobj.assert_called_once_with(file, self.bucket_name, self.file_name)
+            storage: S3StorageService = S3StorageService(bucket_name=self.bucket_name)
 
-        # Assert response is correct
-        self.assertTrue(is_file_saved)
+            file = io.BytesIO(b"Some data")
 
-    @patch('boto3.client')
-    def test_retrieve_file_from_s3_bucket(self, mock_boto_client):
+            await storage.save(file=file, filename=self.file_name)
+
+            obj = conn.Object(self.bucket_name, self.file_name)
+            body = obj.get()["Body"].read().decode("utf-8")
+
+            self.assertEqual(body, "Some data")
+
+    async def test_retrieve_file_from_s3_bucket(self):
         """
-        Test downloading file from S3 bucket
-        :param mock_boto_client:
-        :return:
+        Test retrieving a file from S3 using presigned URL
         """
-        # Create a mock S3 client
-        mock_s3: MagicMock = MagicMock()
-        mock_boto_client.return_value = mock_s3
+        with mock_aws():
+            conn = boto3.resource("s3", region_name=self.region)
 
-        # Mock the presigned URL generation
-        mock_s3.generate_presigned_url.return_value = "http://mocked-url.com"
+            conn.create_bucket(Bucket=self.bucket_name, CreateBucketConfiguration={
+                'LocationConstraint': self.region
+            })
 
-        # Call the method
-        response = self.storage.retrieve(filename='test_object')
+            storage: S3StorageService = S3StorageService(bucket_name=self.bucket_name)
 
-        # Assert that the generate_presigned_url was called with the correct parameters
-        mock_s3.generate_presigned_url.assert_called_once_with(
-            'get_object',
-            Params={'Bucket': self.bucket_name, 'Key': self.file_name},
-            ExpiresIn=3600
-        )
+            file = io.BytesIO(b"Some data")
+            await storage.save(file=file, filename=self.file_name)
 
-        # Assert response is correct
-        self.assertEqual(response, {"url": "http://mocked-url.com"})
+            presigned_url = await storage.retrieve(filename=self.file_name)
+
+            self.assertIn("https://", presigned_url)
+            self.assertIn(self.file_name, presigned_url)

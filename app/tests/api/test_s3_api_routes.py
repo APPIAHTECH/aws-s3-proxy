@@ -1,4 +1,6 @@
+import io
 import unittest
+from unittest.mock import patch, AsyncMock
 
 from fastapi.testclient import TestClient
 from httpx import Response
@@ -14,37 +16,44 @@ class TestS3Routes(unittest.TestCase):
         self.client: TestClient = TestClient(app)
         self.bucket_name: str = "test_bucket"
         self.file_name: str = "test_file.txt"
-        self.UPLOAD_API_PATH: str = "files"
+        self.API_PATH: str = "/files/"
 
-    def test_upload_file(self):
+    @patch("app.services.storage.s3_storage.S3StorageService.save")
+    def test_upload_file(self, mock_s3_service):
         """
         Test uploading a file to S3
         :return:
         """
-        # Prepare a mock file for testing
-        mock_file_content: str = b"test file content"
-        files: dict = {"file": ("test_file.txt", mock_file_content)}
-        payload: dict = {
+        mock_save = AsyncMock(return_value={"is_file_uploaded": True})
+        mock_s3_service.return_value.save = mock_save
+
+        file_content = io.BytesIO(b"Some data")
+        file_content.name = 'test_file.txt'
+
+        data = {
             "bucket_name": self.bucket_name,
             "file_name": self.file_name,
         }
-
-        # Make a request to the FastAPI route
-        response: Response = client.post(
-            url=self.UPLOAD_API_PATH,
-            json=payload,
-            files=files
-        )
+        files = {
+            "file": ("test_file.txt", io.BytesIO(b"Some data"), "text/plain")
+        }
+        response = self.client.post(self.API_PATH, params=data, files=files)
         self.assertEqual(response.status_code, 200)
 
-    def test_download_file(self):
+    @patch("app.services.storage.s3_storage.S3StorageService.retrieve")
+    def test_download_file(self, mock_retrieve):
         """
         Test downloading file from S3
         :return:
         """
+        final_url = "https://abc.org/test_bucket/test_file.txt?Signature=QOxTI0fRgB1cbqrqlQp60IjpZAU%3D&Expires=1727101818"
+        mock_retrieve.return_value = final_url
+
         params: dict = {
             "bucket_name": self.bucket_name,
             "file_name": self.file_name,
         }
-        response: Response = client.get(url=self.UPLOAD_API_PATH, params=params)
+        response: Response = client.get(url=self.API_PATH, params=params)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"file_url": final_url})
+        mock_retrieve.assert_called_once_with(self.file_name)

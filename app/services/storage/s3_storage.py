@@ -4,8 +4,7 @@ from typing import Any
 import boto3
 
 from app.services.storage import StorageService
-from settings.config import AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID
-from utils.constants import FileValidator
+from settings.config import AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_REGION
 
 # Configure the logger
 logging.basicConfig(level=logging.INFO)
@@ -17,14 +16,14 @@ class S3StorageService(StorageService):
     Store the data in an S3 bucket.
     """
 
-    def __init__(self, bucket_name: str, bucket_region: str = 'us-east-1', client=None):
+    def __init__(self, bucket_name: str, bucket_region: str = None, client=None):
         """
         Initialize the storage service.
         :param bucket_name:
         :param bucket_region:
         """
         self.bucket_name: str = bucket_name.strip() if bucket_name else None
-        self.bucket_region: str = bucket_region.strip() if bucket_region else None
+        self.bucket_region: str = bucket_region.strip() if bucket_region else AWS_REGION
         self.client = client if client else boto3.client(
             's3',
             region_name=self.bucket_region,
