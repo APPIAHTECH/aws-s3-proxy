@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import File, UploadFile, Query
+from starlette.formparsers import MultiPartParser
 
 from app.services.s3_service import S3Service
 from settings.config import Config

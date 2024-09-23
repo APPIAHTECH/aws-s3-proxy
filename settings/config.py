@@ -26,6 +26,8 @@ class Config:
 
     ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".pdf", ".txt"}
 
+    MAX_MEMORY_SIZE = 5000 * 1024 * 1024  # 5GB
+
 
 settings = Config()
 app_configs: dict[str, Any] = {"title": Config.TITLE, "version": Config.APP_VERSION, }

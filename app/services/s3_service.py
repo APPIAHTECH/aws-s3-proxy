@@ -2,8 +2,10 @@ import logging
 
 from botocore.exceptions import ClientError
 from fastapi import UploadFile
+from starlette.formparsers import MultiPartParser
 
 from app.classes.storage.s3_storage import S3Storage
+from settings.config import Config
 from utils.exceptions import S3BucketError
 
 logging.basicConfig(level=logging.INFO)
@@ -14,6 +16,11 @@ class S3Service:
     """
     Services encapsulate business logic, such as validating file formats and interacting with AWS S3.
     """
+
+    # Define a maximum size limit for in-memory storage
+    # the default acceptable size in memory. Files sizes < MAX_MEMORY_SIZE MB will be store in memory for fast upload
+    # for large files better use stream -> Next iteration v2
+    MultiPartParser.max_file_size = Config.MAX_MEMORY_SIZE
 
     def __init__(self, bucket_name: str):
         self.storage: S3Storage = S3Storage(bucket_name)
@@ -26,6 +33,10 @@ class S3Service:
         :return:
         """
         logger.info(f"🔄 Starting upload for {object_name}")
+
+        if spooled_temp_file.size and not spooled_temp_file._in_memory:
+            logger.error("❌ File is too large to process in memory")
+            raise S3BucketError("File is too large to process in memory")
 
         if not self.storage.is_valid_file_format(spooled_temp_file=spooled_temp_file, object_name=object_name):
             logger.error("❌ File format is not valid")

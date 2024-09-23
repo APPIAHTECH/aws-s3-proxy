@@ -8,8 +8,20 @@ functionalities:
 - **Upload a File**: Uploads a file to a specified S3 bucket and object.
 - **Download a File**: Retrieves a file from a specified S3 bucket and object.
 
-The service interacts directly with AWS S3.
+### Limitations
+- **File Size Limit**: The maximum file size for uploads is restricted to 5 GB. Files larger than this limit cannot be processed in memory, which may impact performance.
+- **File Format Validation**: Currently supports a limited set of file formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.pdf`, and `.txt`. Other formats will be rejected during upload.
+- **Debugging**: The OpenAPI documentation is hidden in non-debug modes, which may make it difficult to test the API without enabling debug mode.
+- **In-Memory Storage**: For files under the defined memory size, the service uses in-memory storage. Large files will be streamed, which is not yet implemented in this version.
+- **S3 Bucket Configuration**: The service is designed to work with a single S3 bucket specified during initialization. Multi-bucket support is not currently available.
 
+### Future Enhancements
+- **Streaming Uploads**: Implement support for streaming large files directly to S3 without holding them in memory.
+- **Expanded File Format Support**: Add support for more file formats and types based on user feedback.
+- **Multi-Bucket Management**: Allow configuration of multiple S3 buckets for file storage.
+- *Antivirus Scanning**: Implement a feature to scan uploaded files for viruses or potential file attacks before they are stored in the S3 bucket.
+- **File Compression and Email Notifications**: Implement functionality to zip large files before uploading and send email notifications when files have been compressed and uploaded successfully.
+- **Dockerized and CI/CD**: Create Docker image and add CI/CD
 ---
 
 ## Requirements

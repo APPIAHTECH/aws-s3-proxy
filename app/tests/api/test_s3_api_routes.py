@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from httpx import Response
 
 from app.main import app
+from settings.config import Config
 
 client = TestClient(app)
 
@@ -16,7 +17,7 @@ class TestS3Routes(unittest.TestCase):
         self.client: TestClient = TestClient(app)
         self.bucket_name: str = "test_bucket"
         self.file_name: str = "test_file.txt"
-        self.API_PATH: str = "/files/"
+        self.API_PATH: str = f"{Config.API_PREFIX}/files/"
 
     @patch("app.services.s3_service.S3Storage.save")
     def test_upload_file(self, mock_s3_service):
