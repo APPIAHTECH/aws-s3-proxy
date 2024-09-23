@@ -1,9 +1,10 @@
-
 # AWS S3 Proxy Service - FastAPI
 
 ## Overview
 
-This project is a basic proxy service built with **FastAPI** to interact with **AWS S3**. It provides two main functionalities:
+This project is a basic proxy service built with **FastAPI** to interact with **AWS S3**. It provides two main
+functionalities:
+
 - **Upload a File**: Uploads a file to a specified S3 bucket and object.
 - **Download a File**: Retrieves a file from a specified S3 bucket and object.
 
@@ -16,9 +17,10 @@ The service interacts directly with AWS S3.
 ### Prerequisites
 
 Ensure you have the following installed:
+
 - Python 3.12+
 - AWS Account (with an S3 bucket created)
-- Docker (optional, for containerized deployment)
+- Docker (optional, for containerized deployment) | Not implemented lack of time
 
 ### Python Dependencies
 
@@ -29,10 +31,12 @@ pip install -r requirements.txt
 ```
 
 Key dependencies include:
+
 - `FastAPI`: Web framework for building APIs.
 - `Boto3`: AWS SDK for Python.
 - `Uvicorn`: ASGI server for running FastAPI.
 - `Python-dotenv`: To manage environment variables.
+
 ---
 
 ## Environment Setup
@@ -92,41 +96,32 @@ The service will be available at `http://127.0.0.1:8000`.
 
 ### 1. Upload a File to S3
 
-- **URL**: `/api/v1/upload/`
+- **URL**: `/api/v1/files/`
 - **Method**: `POST`
-- **Parameters**:
-  - `bucket_name`: The S3 bucket name (query parameter).
-  - `object_name`: The desired object name in S3 (query parameter).
+- **Body**: JSON object with the following keys:
+    - `bucket_name`: The S3 bucket name.
+    - `object_name`: The object name in the S3 bucket.
 - **File**: Passed as form data (multipart/form-data).
-
-#### Example cURL Request:
-
-```bash
-curl -X 'POST'   'http://127.0.0.1:8000/api/v1/upload/?bucket_name=my-bucket&object_name=myfile.txt'   -H 'accept: application/json'   -F 'file=@path_to_your_file'
-```
 
 ### 2. Download a File from S3
 
-- **URL**: `/api/v1/download/`
-- **Method**: `POST`
-- **Body**: JSON object with the following keys:
-  - `bucket_name`: The S3 bucket name.
-  - `object_name`: The object name in the S3 bucket.
+- **URL**: `/api/v1/files/`
+- **Method**: `GET`
+- **Parameters**:
+    - `bucket_name`: The S3 bucket name (query parameter).
+    - `object_name`: The desired object name in S3 (query parameter).
 
-#### Example cURL Request:
+### More API doc
 
-```bash
-curl -X 'POST'   'http://127.0.0.1:8000/api/v1/download/'   -H 'accept: application/json'   -H 'Content-Type: application/json'   -d '{
-  "bucket_name": "my-bucket",
-  "object_name": "myfile.txt"
-}'
-```
+- **URL**: `localhost:port/docs`
+- **URL**: `localhost:port/redoc`
 
 ---
 
 ## Running Unit Tests
 
-Tests use **unittest** and mock AWS interactions. Ensure that tests are run in an isolated environment without interacting with real AWS resources.
+Tests use **unittest** and mock AWS interactions. Ensure that tests are run in an isolated environment without
+interacting with real AWS resources.
 
 1. **Install Testing Dependencies**:
 
@@ -141,25 +136,5 @@ python -m unittest discover
 ```
 
 Tests are located in the `tests/` folder. These will mock S3 services to avoid actual AWS calls during testing.
-
----
-
-## Docker Instructions
-
-If you'd like to run the service in Docker:
-
-### 1. Build the Docker Image
-
-```bash
-docker build -t s3-fastapi-proxy .
-```
-
-### 2. Run the Docker Container
-
-```bash
-docker run -p 8000:8000 s3-fastapi-proxy
-```
-
-The service will be available at `http://127.0.0.1:8000`.
 
 ---

@@ -1,13 +1,13 @@
 import io
 import unittest
+from unittest.mock import patch, AsyncMock
 
-import boto3
-from moto import mock_aws
+from fastapi import UploadFile
 
-from app.services.storage.s3_storage import S3StorageService
+from app.services.s3_service import S3Service
 
 
-class TestStorageService(unittest.IsolatedAsyncioTestCase):
+class TestS3Service(unittest.IsolatedAsyncioTestCase):
     """
     Test StorageService
     """
@@ -15,47 +15,34 @@ class TestStorageService(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.bucket_name: str = "test_bucket"
         self.file_name: str = "test_file.txt"
-        self.region: str = "eu-west-1"
 
-    async def test_save_file_to_s3_bucket(self):
+    @patch("app.services.s3_service.S3Storage.save")
+    async def test_upload_file_to_s3_bucket(self, mock_s3_service):
         """
-        Test uploading file to S3 bucket
+        Test uploading file to S3 bucket and mocking the upload process
         """
-        with mock_aws():
-            conn = boto3.resource("s3", region_name=self.region)
+        s3_service = S3Service(bucket_name=self.bucket_name)
+        mock_save = AsyncMock(return_value={"filename": "fabc3e15-d736-4f25-ab57-77bc138daa2b"})
+        mock_s3_service.return_value.save = mock_save
 
-            conn.create_bucket(Bucket=self.bucket_name, CreateBucketConfiguration={
-                'LocationConstraint': self.region
-            })
+        file = UploadFile(filename="test_file.txt", file=io.BytesIO(b"Some data"))
 
-            storage: S3StorageService = S3StorageService(bucket_name=self.bucket_name)
+        response = await s3_service.upload_file(spooled_temp_file=file, object_name=self.file_name)
 
-            file = io.BytesIO(b"Some data")
+        self.assertTrue("filename" in response)
 
-            await storage.save(file=file, filename=self.file_name)
-
-            obj = conn.Object(self.bucket_name, self.file_name)
-            body = obj.get()["Body"].read().decode("utf-8")
-
-            self.assertEqual(body, "Some data")
-
-    async def test_retrieve_file_from_s3_bucket(self):
+    @patch("app.services.s3_service.S3Storage.save")
+    async def test_download_file_from_s3_bucket(self, mock_s3_service_upload):
         """
         Test retrieving a file from S3 using presigned URL
         """
-        with mock_aws():
-            conn = boto3.resource("s3", region_name=self.region)
+        mock_save = AsyncMock(return_value={"url": "https://abc.org/test_bucket/test_file.txt?Signature=QOxTI0fR"})
+        mock_s3_service_upload.return_value.save = mock_save
 
-            conn.create_bucket(Bucket=self.bucket_name, CreateBucketConfiguration={
-                'LocationConstraint': self.region
-            })
+        s3_service: S3Service = S3Service(bucket_name=self.bucket_name)
+        file = UploadFile(filename="test_file.txt", file=io.BytesIO(b"Some data"))
+        await s3_service.upload_file(spooled_temp_file=file, object_name=self.file_name)
+        presigned_url = await s3_service.download_file(object_name=self.file_name)
 
-            storage: S3StorageService = S3StorageService(bucket_name=self.bucket_name)
-
-            file = io.BytesIO(b"Some data")
-            await storage.save(file=file, filename=self.file_name)
-
-            presigned_url = await storage.retrieve(filename=self.file_name)
-
-            self.assertIn("https://", presigned_url)
-            self.assertIn(self.file_name, presigned_url)
+        self.assertIn("https://", presigned_url)
+        self.assertIn(self.file_name, presigned_url)

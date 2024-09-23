@@ -2,37 +2,28 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import File, UploadFile, Query
 
-from app.services.storage.s3_storage import S3StorageService
-from utils.exceptions import FileFormatError
-from utils.file_manager import FileManager
+from app.services.s3_service import S3Service
+from settings.config import Config
 
-router = APIRouter()
+router = APIRouter(prefix=Config.API_PREFIX)
 
 
-async def get_storage_service(bucket_name: str = Query(...)) -> S3StorageService:
-    return S3StorageService(bucket_name=bucket_name)
+async def get_storage_service(bucket_name: str = Query(...)) -> S3Service:
+    return S3Service(bucket_name=bucket_name)
 
 
 @router.post("/files/")
 async def upload_file(
-        object_name: str = Query(..., description="The file name with extention to save as in S3"),
+        object_name: str = Query(..., description="The file name with extension to save as in S3"),
         file: UploadFile = File(..., ),
-        storage_service: S3StorageService = Depends(get_storage_service)
+        s3_service: S3Service = Depends(get_storage_service)
 ):
-    if not FileManager.is_valid_file_format(spooled_temp_file=file):
-        raise FileFormatError("File format is not valid")
-
-    unique_filename = FileManager.generate_unique_filename(object_name)
-
-    await storage_service.save(file.file, unique_filename)
-
-    return {"filename": unique_filename}
+    return await s3_service.upload_file(spooled_temp_file=file, object_name=object_name)
 
 
 @router.get("/files/")
 async def download_file(
         object_name: str = Query(..., description="The file name to download from S3"),
-        storage_service: S3StorageService = Depends(get_storage_service)
+        s3_service: S3Service = Depends(get_storage_service)
 ):
-    file_path = await storage_service.retrieve(object_name)
-    return {"file_url": file_path}
+    return await s3_service.download_file(object_name=object_name)

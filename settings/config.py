@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 
 from utils.constants import Environment
 
+load_dotenv()  # Take environment variables from .env
+
 
 class Config:
-    ENVIRONMENT: Environment = Environment.TESTING
+    ENVIRONMENT: Environment = Environment.use_env(os.getenv("ENVIRONMENT"))
 
     SENTRY_DSN: str | None = None
 
@@ -17,24 +19,20 @@ class Config:
 
     TITLE: str = "AWS S3 Proxy API"
     APP_VERSION: str = "1.0.0"
-    ROOT_PATH: str = f"/api/v{APP_VERSION[:1]}"
+    API_PREFIX: str = f"/api/v{APP_VERSION[:1]}"
 
     ORIGINS = []
     ALLOWED_HOSTS = []
 
-    ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "pdf", "txt"}
+    ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".pdf", ".txt"}
 
 
 settings = Config()
 app_configs: dict[str, Any] = {"title": Config.TITLE, "version": Config.APP_VERSION, }
 
-if settings.ENVIRONMENT.is_deployed:
-    app_configs["root_path"] = settings.ROOT_PATH
-
 if not settings.ENVIRONMENT.is_debug:
     app_configs["openapi_url"] = None  # hide docs
 
-load_dotenv()  # Take environment variables from .env
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION")

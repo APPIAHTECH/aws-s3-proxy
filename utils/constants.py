@@ -18,3 +18,10 @@ class Environment(str, Enum):
     @property
     def is_deployed(self) -> bool:
         return self in (self.STAGING, self.PRODUCTION)
+
+    @staticmethod
+    def use_env(env: str):
+        try:
+            return Environment[env.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid environment: {env}")
